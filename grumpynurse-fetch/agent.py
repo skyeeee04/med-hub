@@ -66,7 +66,7 @@ SPECIALTY_MAP = {
 
 
 class ReferralRequest(Model):
-    # Your original AI request shape
+    
     patient_name: str
     age: Optional[int] = None
     language_preference: str = "en"
@@ -76,7 +76,7 @@ class ReferralRequest(Model):
 
 
 class TeamReferralRequest(Model):
-    # Teammate's referral.py shape
+    
     patient_name: str
     referred_specialty: str
     reason_for_referral: str
@@ -107,7 +107,7 @@ class ReferralAnalysisResponse(Model):
 
 
 class TeamReferralResponse(Model):
-    # Response shape friendly to teammate’s route usage
+    
     patient_name: str
     referred_specialty: str
     reason_for_referral: str
@@ -537,13 +537,13 @@ async def health(ctx: Context) -> HealthResponse:
     return HealthResponse(status="ok", agent_name=AGENT_NAME)
 
 
-# Your original route
+
 @agent.on_rest_post("/analyze_referral", ReferralRequest, ReferralAnalysisResponse)
 async def analyze_referral(ctx: Context, req: ReferralRequest) -> ReferralAnalysisResponse:
     return await analyze_referral_logic(ctx, req)
 
 
-# Teammate-compatible route: /referral
+
 @agent.on_rest_post("/referral", TeamReferralRequest, TeamReferralResponse)
 async def analyze_referral_team_route(ctx: Context, req: TeamReferralRequest) -> TeamReferralResponse:
     internal_req = team_request_to_referral_request(req)
@@ -567,11 +567,10 @@ async def analyze_referral_team_route(ctx: Context, req: TeamReferralRequest) ->
     )
 
 
-# Teammate-compatible patient explanation route
+
 @agent.on_rest_get("/patients", PatientExplanationResponse)
 async def get_patients(ctx: Context) -> PatientExplanationResponse:
-    # Keeps the route alive for the current teammate placeholder.
-    # Since GET has no body, we return a basic default explanation.
+    
     return await explain_patient_logic(
         ctx=ctx,
         patient_name="Patient",
