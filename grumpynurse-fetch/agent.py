@@ -45,18 +45,44 @@ agent = Agent(
 
 protocol = Protocol(spec=chat_protocol_spec)
 
-
-# ----------------------------
+# =========================================================
 # Models
-# ----------------------------
+# =========================================================
+
+SUPPORTED_LANGUAGES = {"en", "vi", "es"}
+
+SPECIALTY_MAP = {
+    "cardiology": "Heart Doctor",
+    "dermatology": "Skin Doctor",
+    "neurology": "Brain and Nerve Doctor",
+    "gastroenterology": "Stomach and Digestive Doctor",
+    "orthopedics": "Bone and Joint Doctor",
+    "orthopedic": "Bone and Joint Doctor",
+    "pulmonology": "Lung Doctor",
+    "endocrinology": "Hormone Doctor",
+    "oncology": "Cancer Doctor",
+    "psychiatry": "Mental Health Doctor",
+}
+
 
 class ReferralRequest(Model):
+    # Your original AI request shape
     patient_name: str
     age: Optional[int] = None
     language_preference: str = "en"
     location: Optional[str] = None
     insurance: Optional[str] = None
     referral_text: str
+
+
+class TeamReferralRequest(Model):
+    # Teammate's referral.py shape
+    patient_name: str
+    referred_specialty: str
+    reason_for_referral: str
+    current_documents: str
+    insurance_info: str
+    language_preference: str
 
 
 class TaskItem(Model):
@@ -80,23 +106,63 @@ class ReferralAnalysisResponse(Model):
     status: str
 
 
+class TeamReferralResponse(Model):
+    # Response shape friendly to teammate’s route usage
+    patient_name: str
+    referred_specialty: str
+    reason_for_referral: str
+    current_documents: str
+    insurance_info: str
+    language_preference: str
+    referral_summary: str
+    specialty_simple_name: str
+    urgency_level: str
+    missing_info: List[str]
+    tasks: List[TaskItem]
+    patient_friendly_explanation: str
+    translated_explanation: str
+    status: str
+
+
+class PatientExplanationRequest(Model):
+    patient_name: str
+    language_preference: str = "en"
+    summary_text: str
+
+
+class PatientExplanationResponse(Model):
+    patient_name: str
+    language_used: str
+    patient_friendly_explanation: str
+    translated_explanation: str
+
+
+class TaskRequest(Model):
+    patient_name: str
+    referred_specialty: str
+    reason_for_referral: str
+    current_documents: str
+    insurance_info: str
+    language_preference: str = "en"
+
+
+class TaskResponse(Model):
+    patient_name: str
+    tasks: List[TaskItem]
+    missing_info: List[str]
+    status: str
+
+
 class HealthResponse(Model):
     status: str
     agent_name: str
 
 
-# ----------------------------
+# =========================================================
 # Helpers
-# ----------------------------
-
-SUPPORTED_LANGUAGES = {"en", "vi", "es"}
-
+# =========================================================
 
 def normalize_language(language: Optional[str]) -> str:
-    """
-    Normalize language preference to a supported code.
-    Defaults to English if unsupported or missing.
-    """
     if not language:
         return "en"
 
@@ -115,28 +181,30 @@ def normalize_language(language: Optional[str]) -> str:
     }
 
     lang = aliases.get(lang, lang)
-
-    if lang not in SUPPORTED_LANGUAGES:
-        return "en"
-
-    return lang
+    return lang if lang in SUPPORTED_LANGUAGES else "en"
 
 
 def normalize_specialty_simple_name(specialty: str) -> str:
     specialty_lower = (specialty or "").strip().lower()
+    return SPECIALTY_MAP.get(specialty_lower, "Specialist Doctor")
 
-    mapping = {
-        "cardiology": "Heart Doctor",
-        "dermatology": "Skin Doctor",
-        "neurology": "Brain and Nerve Doctor",
-        "gastroenterology": "Stomach and Digestive Doctor",
-        "orthopedics": "Bone and Joint Doctor",
-        "orthopedic": "Bone and Joint Doctor",
-        "pulmonology": "Lung Doctor",
-        "endocrinology": "Hormone Doctor",
-    }
 
-    return mapping.get(specialty_lower, "Specialist Doctor")
+def team_request_to_referral_request(data: TeamReferralRequest) -> ReferralRequest:
+    combined_text = (
+        f"Requested specialty: {data.referred_specialty}\n"
+        f"Reason for referral: {data.reason_for_referral}\n"
+        f"Current documents: {data.current_documents}\n"
+        f"Insurance info: {data.insurance_info}"
+    )
+
+    return ReferralRequest(
+        patient_name=data.patient_name,
+        age=None,
+        language_preference=normalize_language(data.language_preference),
+        location=None,
+        insurance=data.insurance_info,
+        referral_text=combined_text,
+    )
 
 
 def build_referral_prompt(data: ReferralRequest) -> str:
@@ -199,6 +267,35 @@ Referral text:
 """.strip()
 
 
+def build_explanation_prompt(patient_name: str, summary_text: str, language: str) -> str:
+    return f"""
+You are a healthcare patient explanation assistant.
+
+Return ONLY valid JSON.
+
+JSON schema:
+{{
+  "patient_friendly_explanation": "string",
+  "translated_explanation": "string"
+}}
+
+Rules:
+- Write patient_friendly_explanation in simple English.
+- Then translate based on language_preference:
+  - en -> translated_explanation must equal patient_friendly_explanation
+  - vi -> Vietnamese
+  - es -> Spanish
+  - unsupported -> English
+- Use short, clear language for patients.
+- No markdown.
+
+Patient name: {patient_name}
+Language preference: {language}
+Summary text:
+{summary_text}
+""".strip()
+
+
 def call_asi_json(prompt: str) -> Dict[str, Any]:
     response = client.chat.completions.create(
         model="asi1-mini",
@@ -217,7 +314,6 @@ def call_asi_json(prompt: str) -> Dict[str, Any]:
 
     content = response.choices[0].message.content.strip()
 
-    # Defensive cleanup if model still returns fenced JSON
     if content.startswith("```"):
         content = content.strip("`")
         if content.lower().startswith("json"):
@@ -227,10 +323,6 @@ def call_asi_json(prompt: str) -> Dict[str, Any]:
 
 
 def translate_text(text: str, target_language: str) -> str:
-    """
-    Fallback translator using ASI if the first response did not follow
-    translation instructions properly.
-    """
     language = normalize_language(target_language)
 
     if language == "en":
@@ -273,27 +365,19 @@ Text:
 
 
 def enforce_translation_logic(result: Dict[str, Any], language: str) -> Dict[str, Any]:
-    """
-    Make sure translated_explanation truly matches language_preference.
-    """
     language = normalize_language(language)
 
     base_text = str(result.get("patient_friendly_explanation", "")).strip()
     translated_text = str(result.get("translated_explanation", "")).strip()
 
-    # Ensure English base explanation always exists
     if not base_text:
         base_text = "Your referral has been received. The care team is reviewing what is needed before your specialist visit."
         result["patient_friendly_explanation"] = base_text
 
-    # English preference: translated text should match English exactly
     if language == "en":
         result["translated_explanation"] = base_text
         return result
 
-    # Non-English preference:
-    # If the model forgot to translate or returned the same English text,
-    # do a second translation call.
     if not translated_text or translated_text == base_text:
         try:
             translated_text = translate_text(base_text, language)
@@ -344,9 +428,6 @@ def safe_fallback(data: ReferralRequest) -> Dict[str, Any]:
 
 
 def sanitize_result(result: Dict[str, Any], data: ReferralRequest) -> Dict[str, Any]:
-    """
-    Normalizes and fills in missing fields from the LLM output.
-    """
     language = normalize_language(data.language_preference)
 
     detected_specialty = str(result.get("detected_specialty", "Unknown")).strip()
@@ -378,15 +459,13 @@ def sanitize_result(result: Dict[str, Any], data: ReferralRequest) -> Dict[str, 
     result["tasks"] = tasks
     result["status"] = str(result.get("status", "Reviewing")).strip() or "Reviewing"
 
-    # Enforce translation rules
     result = enforce_translation_logic(result, language)
-
     return result
 
 
-# ----------------------------
+# =========================================================
 # Core business logic
-# ----------------------------
+# =========================================================
 
 async def analyze_referral_logic(ctx: Context, data: ReferralRequest) -> ReferralAnalysisResponse:
     language = normalize_language(data.language_preference)
@@ -421,26 +500,123 @@ async def analyze_referral_logic(ctx: Context, data: ReferralRequest) -> Referra
     )
 
 
-# ----------------------------
-# REST endpoints
-# ----------------------------
+async def explain_patient_logic(
+    ctx: Context,
+    patient_name: str,
+    summary_text: str,
+    language_preference: str,
+) -> PatientExplanationResponse:
+    language = normalize_language(language_preference)
 
-@agent.on_rest_get("/health", HealthResponse)
-async def health(ctx: Context) -> HealthResponse:
-    return HealthResponse(
-        status="ok",
-        agent_name=AGENT_NAME,
+    try:
+        result = call_asi_json(build_explanation_prompt(patient_name, summary_text, language))
+        result = enforce_translation_logic(result, language)
+    except Exception as e:
+        ctx.logger.error(f"Patient explanation failed: {e}")
+        base_text = "Your care team has reviewed your referral and will let you know the next steps."
+        translated = base_text if language == "en" else translate_text(base_text, language)
+        result = {
+            "patient_friendly_explanation": base_text,
+            "translated_explanation": translated,
+        }
+
+    return PatientExplanationResponse(
+        patient_name=patient_name,
+        language_used=language,
+        patient_friendly_explanation=result.get("patient_friendly_explanation", ""),
+        translated_explanation=result.get("translated_explanation", ""),
     )
 
 
+# =========================================================
+# REST endpoints
+# =========================================================
+
+@agent.on_rest_get("/health", HealthResponse)
+async def health(ctx: Context) -> HealthResponse:
+    return HealthResponse(status="ok", agent_name=AGENT_NAME)
+
+
+# Your original route
 @agent.on_rest_post("/analyze_referral", ReferralRequest, ReferralAnalysisResponse)
 async def analyze_referral(ctx: Context, req: ReferralRequest) -> ReferralAnalysisResponse:
     return await analyze_referral_logic(ctx, req)
 
 
-# ----------------------------
+# Teammate-compatible route: /referral
+@agent.on_rest_post("/referral", TeamReferralRequest, TeamReferralResponse)
+async def analyze_referral_team_route(ctx: Context, req: TeamReferralRequest) -> TeamReferralResponse:
+    internal_req = team_request_to_referral_request(req)
+    result = await analyze_referral_logic(ctx, internal_req)
+
+    return TeamReferralResponse(
+        patient_name=req.patient_name,
+        referred_specialty=req.referred_specialty,
+        reason_for_referral=req.reason_for_referral,
+        current_documents=req.current_documents,
+        insurance_info=req.insurance_info,
+        language_preference=normalize_language(req.language_preference),
+        referral_summary=result.referral_summary,
+        specialty_simple_name=result.specialty_simple_name,
+        urgency_level=result.urgency_level,
+        missing_info=result.missing_info,
+        tasks=result.tasks,
+        patient_friendly_explanation=result.patient_friendly_explanation,
+        translated_explanation=result.translated_explanation,
+        status=result.status,
+    )
+
+
+# Teammate-compatible patient explanation route
+@agent.on_rest_get("/patients", PatientExplanationResponse)
+async def get_patients(ctx: Context) -> PatientExplanationResponse:
+    # Keeps the route alive for the current teammate placeholder.
+    # Since GET has no body, we return a basic default explanation.
+    return await explain_patient_logic(
+        ctx=ctx,
+        patient_name="Patient",
+        summary_text="Your referral is being reviewed by the care team.",
+        language_preference="en",
+    )
+
+
+@agent.on_rest_post("/patients/explain", PatientExplanationRequest, PatientExplanationResponse)
+async def explain_patient(ctx: Context, req: PatientExplanationRequest) -> PatientExplanationResponse:
+    return await explain_patient_logic(
+        ctx=ctx,
+        patient_name=req.patient_name,
+        summary_text=req.summary_text,
+        language_preference=req.language_preference,
+    )
+
+
+# Teammate-compatible task route
+@agent.on_rest_post("/tasks", TaskRequest, TaskResponse)
+async def generate_tasks(ctx: Context, req: TaskRequest) -> TaskResponse:
+    internal_req = team_request_to_referral_request(
+        TeamReferralRequest(
+            patient_name=req.patient_name,
+            referred_specialty=req.referred_specialty,
+            reason_for_referral=req.reason_for_referral,
+            current_documents=req.current_documents,
+            insurance_info=req.insurance_info,
+            language_preference=req.language_preference,
+        )
+    )
+
+    result = await analyze_referral_logic(ctx, internal_req)
+
+    return TaskResponse(
+        patient_name=req.patient_name,
+        tasks=result.tasks,
+        missing_info=result.missing_info,
+        status=result.status,
+    )
+
+
+# =========================================================
 # Chat protocol support
-# ----------------------------
+# =========================================================
 
 @protocol.on_message(ChatMessage)
 async def handle_chat(ctx: Context, sender: str, msg: ChatMessage):
