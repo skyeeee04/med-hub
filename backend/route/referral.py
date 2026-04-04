@@ -13,7 +13,8 @@ class ReferralRequest(BaseModel):
 
 router = APIRouter()
 
-router.post()("/referral")
+
+@router.post("/referral")
 def analyze_referral(referral_request: ReferralRequest):
     
     # Placeholder for referral analysis logic
@@ -26,5 +27,6 @@ def analyze_referral(referral_request: ReferralRequest):
         "language_preference": referral_request.language_preference,
     }
     
+    # to do: Implement actual analysis logic here
     return analysis_result
     
