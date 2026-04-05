@@ -71,6 +71,9 @@ export default function App() {
   const [generatedSummary, setGeneratedSummary] = useState('');
   const [medications, setMedications] = useState<any[]>([]);
   const [summarizing, setSummarizing] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState('');
+const [selectedTime, setSelectedTime] = useState('');
+const [selectedDate, setSelectedDate] = useState('');
 
   const handleSummarize = async () => {
     setSummarizing(true);
@@ -527,20 +530,24 @@ export default function App() {
             }}
           >
             <div>
-              <h2
-                style={{
-                  fontSize: 24,
-                  fontWeight: 400,
-                  color: '#5D4A97',
-                  fontFamily: '"Otomanopee One", sans-serif',
-                  letterSpacing: 0.5,
-                  marginBottom: 4,
-                  borderBottom: '1px solid #5D4A97',
-                  paddingBottom: 4,
-                }}
-              >
-                Request
-              </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #5D4A97', paddingBottom: 4, marginBottom: 4 }}>
+  <h2 style={{ fontSize: 24, fontWeight: 400, color: '#5D4A97', fontFamily: '"Otomanopee One", sans-serif', letterSpacing: 0.5 }}>
+    Request
+  </h2>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <g clipPath="url(#clip0_req)">
+      <path d="M11.017 2.81401C11.0599 2.58462 11.1816 2.37743 11.3611 2.22833C11.5406 2.07924 11.7667 1.99762 12 1.99762C12.2334 1.99762 12.4594 2.07924 12.6389 2.22833C12.8184 2.37743 12.9402 2.58462 12.983 2.81401L14.034 8.37201C14.1087 8.76716 14.3007 9.13063 14.585 9.41498C14.8694 9.69934 15.2329 9.89137 15.628 9.96601L21.186 11.017C21.4154 11.0599 21.6226 11.1816 21.7717 11.3611C21.9208 11.5406 22.0024 11.7667 22.0024 12C22.0024 12.2334 21.9208 12.4594 21.7717 12.6389C21.6226 12.8184 21.4154 12.9402 21.186 12.983L15.628 14.034C15.2329 14.1087 14.8694 14.3007 14.585 14.585C14.3007 14.8694 14.1087 15.2329 14.034 15.628L12.983 21.186C12.9402 21.4154 12.8184 21.6226 12.6389 21.7717C12.4594 21.9208 12.2334 22.0024 12 22.0024C11.7667 22.0024 11.5406 21.9208 11.3611 21.7717C11.1816 21.6226 11.0599 21.4154 11.017 21.186L9.96601 15.628C9.89137 15.2329 9.69934 14.8694 9.41498 14.585C9.13063 14.3007 8.76716 14.1087 8.37201 14.034L2.81401 12.983C2.58462 12.9402 2.37743 12.8184 2.22833 12.6389C2.07924 12.4594 1.99762 12.2334 1.99762 12C1.99762 11.7667 2.07924 11.5406 2.22833 11.3611C2.37743 11.1816 2.58462 11.0599 2.81401 11.017L8.37201 9.96601C8.76716 9.89137 9.13063 9.69934 9.41498 9.41498C9.69934 9.13063 9.89137 8.76716 9.96601 8.37201L11.017 2.81401Z" stroke="#5D4A97" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M20 2V6" stroke="#5D4A97" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M22 4H18" stroke="#5D4A97" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M4 22C5.10457 22 6 21.1046 6 20C6 18.8954 5.10457 18 4 18C2.89543 18 2 18.8954 2 20C2 21.1046 2.89543 22 4 22Z" stroke="#5D4A97" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </g>
+    <defs>
+      <clipPath id="clip0_req">
+        <rect width="24" height="24" fill="white"/>
+      </clipPath>
+    </defs>
+  </svg>
+</div>
               <div
                 style={{
                   borderRadius: 10,
@@ -665,77 +672,131 @@ export default function App() {
               >
                 Schedule an appointment
               </h2>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column' as const,
-                  gap: 8,
-                  marginTop: 10,
-                }}
-              >
-                {[
-                  {
-                    icon: <MapPin size={18} />,
-                    label: 'Location',
-                    value: 'UCSD Express Care - La Jolla',
-                  },
-                  {
-                    icon: <Clock3 size={18} />,
-                    label: 'Time',
-                    value: '2:30 PM',
-                  },
-                  {
-                    icon: <Phone size={18} />,
-                    label: 'Phone',
-                    value: '800-926-8273',
-                  },
-                ].map((item, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      ...screen1BtnStyle,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 20px',
-                    }}
-                  >
-                    <div
-                      style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                    >
-                      {item.icon}
-                      <span
+              <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginTop: 10 }}>
+                
+                {/* Location */}
+                <div style={{ borderRadius: 10, background: 'linear-gradient(0deg, #FFF 0%, #FFF 100%), linear-gradient(180deg, #D0A4B1 0%, #A16EB9 100%)', backgroundBlendMode: 'soft-light, normal', padding: '12px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <MapPin size={18} />
+                    <span style={{ fontSize: 16, fontWeight: 700, color: '#A16EB9', fontFamily: 'Lato, sans-serif', letterSpacing: 0.5 }}>Location</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 6 }}>
+                    {['UCSD Express Care - La Jolla'].map((loc) => (
+                      <button
+                        key={loc}
+                        onClick={() => setSelectedLocation(loc)}
                         style={{
-                          fontSize: 16,
-                          fontWeight: 700,
-                          color: '#A16EB9',
+                          borderRadius: 8,
+                          padding: '8px 12px',
+                          border: selectedLocation === loc ? '2px solid #5D4A97' : '1px solid #ddd',
+                          background: selectedLocation === loc ? '#EFDFE4' : 'white',
+                          cursor: 'pointer',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          color: '#2A2A5C',
                           fontFamily: 'Lato, sans-serif',
-                          letterSpacing: 0.5,
-                          textAlign: 'center' as const,
+                          textAlign: 'left' as const,
                         }}
                       >
-                        {item.label}
-                      </span>
-                    </div>
-                    <span style={{}}>{item.value}</span>
+                        {loc}
+                      </button>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                  {/* Date - only shows after location selected */}
+                {selectedLocation && (
+                  <div style={{ borderRadius: 10, background: 'linear-gradient(0deg, #FFF 0%, #FFF 100%), linear-gradient(180deg, #D0A4B1 0%, #A16EB9 100%)', backgroundBlendMode: 'soft-light, normal', padding: '12px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <Clock3 size={18} />
+                      <span style={{ fontSize: 16, fontWeight: 700, color: '#A16EB9', fontFamily: 'Lato, sans-serif', letterSpacing: 0.5 }}>Date</span>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+                      {['Mon Apr 6', 'Tue Apr 7', 'Wed Apr 8', 'Thu Apr 9', 'Fri Apr 10', 'Sat Apr 11'].map((date) => (
+                        <button
+                          key={date}
+                          onClick={() => setSelectedDate(date)}
+                          style={{
+                            borderRadius: 8,
+                            padding: '8px 12px',
+                            border: selectedDate === date ? '2px solid #5D4A97' : '1px solid #ddd',
+                            background: selectedDate === date ? '#EFDFE4' : 'white',
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            fontWeight: 500,
+                            color: '#2A2A5C',
+                            fontFamily: 'Lato, sans-serif',
+                          }}
+                        >
+                          {date}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Time - only shows after date selected */}
+                {selectedDate && (
+                  <div style={{ borderRadius: 10, background: 'linear-gradient(0deg, #FFF 0%, #FFF 100%), linear-gradient(180deg, #D0A4B1 0%, #A16EB9 100%)', backgroundBlendMode: 'soft-light, normal', padding: '12px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <Clock3 size={18} />
+                      <span style={{ fontSize: 16, fontWeight: 700, color: '#A16EB9', fontFamily: 'Lato, sans-serif', letterSpacing: 0.5 }}>Time</span>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+                      {['9:00 AM', '10:00 AM', '11:30 AM', '1:00 PM', '2:30 PM', '4:00 PM'].map((time) => (
+                        <button
+                          key={time}
+                          onClick={() => setSelectedTime(time)}
+                          style={{
+                            borderRadius: 8,
+                            padding: '8px 12px',
+                            border: selectedTime === time ? '2px solid #5D4A97' : '1px solid #ddd',
+                            background: selectedTime === time ? '#EFDFE4' : 'white',
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            fontWeight: 500,
+                            color: '#2A2A5C',
+                            fontFamily: 'Lato, sans-serif',
+                          }}
+                        >
+                          {time}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Phone - only shows after time selected */}
+                {selectedTime && (
+                  <div style={{ borderRadius: 10, background: 'linear-gradient(0deg, #FFF 0%, #FFF 100%), linear-gradient(180deg, #D0A4B1 0%, #A16EB9 100%)', backgroundBlendMode: 'soft-light, normal', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Phone size={18} />
+                      <span style={{ fontSize: 16, fontWeight: 700, color: '#A16EB9', fontFamily: 'Lato, sans-serif', letterSpacing: 0.5 }}>Phone</span>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: '#2A2A5C', fontFamily: 'Lato, sans-serif', letterSpacing: 0.5 }}>800-926-8273</span>
+                  </div>
+                )}
               </div>
-              <button
-                onClick={() => setScreen('tasklist')}
-                style={{
-                  ...btnStyle,
-                  width: '100%',
-                  padding: '14px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  marginTop: 12,
-                }}
-              >
-                Confirm appointment
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+  <button
+    onClick={() => setScreen('tasklist')}
+    style={{
+      borderRadius: 100,
+      background: '#F4E4AC',
+      boxShadow: '0 4px 4px 0 rgba(0, 0, 0, 0.25), 4px 4px 4px 0 #FFF5D3 inset',
+      padding: '12px 32px',
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: 16,
+      fontWeight: 700,
+      color: '#2A2A5C',
+      fontFamily: 'Lato, sans-serif',
+      letterSpacing: 0.5,
+    }}
+  >
+    Confirm appointment
+  </button>
+</div>
             </div>
 
             <button
@@ -765,25 +826,32 @@ export default function App() {
               gap: 16,
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column' as const,
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              <div
-                style={{
-                  background: '#F4E4AC',
-                  borderRadius: 100,
-                  padding: '4px 14px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  alignSelf: 'center',
-                }}
-              >
+          <div
+  style={{
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: 4,
+    border: '1px solid rgba(93, 74, 151, 0.5)',
+    borderRadius: 40,
+    boxShadow: '1px 1px 5px 1px #5D4A97',
+    padding: '12px 16px',
+    width: '100%',
+    background: 'white',
+    boxSizing: 'border-box' as const,
+  }}
+>
+  <div
+    style={{
+      background: '#F4E4AC',
+      borderRadius: 100,
+      padding: '4px 14px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      alignSelf: 'center',
+    }}
+  >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
@@ -793,14 +861,14 @@ export default function App() {
                 >
                   <path
                     d="M15 27.5C21.9036 27.5 27.5 21.9036 27.5 15C27.5 8.09644 21.9036 2.5 15 2.5C8.09644 2.5 2.5 8.09644 2.5 15C2.5 21.9036 8.09644 27.5 15 27.5Z"
-                    stroke="#A16EB9"
+                    stroke="#5D4A97"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                   <path
                     d="M11.25 15L13.75 17.5L18.75 12.5"
-                    stroke="#A16EB9"
+                    stroke="#5D4A97"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -809,7 +877,7 @@ export default function App() {
                 <span
                   style={{
                     fontSize: 12,
-                    color: '#A16EB9',
+                    color: '#5D4A97',
                     fontFamily: 'Lato, sans-serif',
                     fontWeight: 700,
                     letterSpacing: 0.5,
@@ -856,7 +924,7 @@ export default function App() {
                   textAlign: 'center' as const,
                 }}
               >
-                Saturday, April 4 @ 2:30 PM
+                Monday, April 6 @ 9:00 AM
               </p>
             </div>
 
@@ -965,9 +1033,9 @@ export default function App() {
                       fontWeight: 600,
                       color:
                         t.status === 'Missing'
-                          ? '#e74c3c'
+                          ? '#2A2A5C'
                           : t.status === 'Pending'
-                          ? '#f39c12'
+                          ? '#A16EB9'
                           : '#A16EB9',
                     }}
                   >
@@ -1018,12 +1086,13 @@ export default function App() {
             {/* Instructions */}
             <div
               style={{
-                background: '#EFDFE4',
-                borderRadius: 16,
-                padding: '12px 16px',
-                display: 'flex',
-                gap: 12,
-                alignItems: 'flex-start',
+                borderRadius: 10,
+    background: 'linear-gradient(0deg, #FFF 0%, #FFF 100%), linear-gradient(180deg, #D0A4B1 0%, #A16EB9 100%)',
+    backgroundBlendMode: 'soft-light, normal',
+    padding: '12px 16px',
+    display: 'flex',
+    gap: 12,
+    alignItems: 'flex-start',
               }}
             >
               <Smile
@@ -1061,12 +1130,13 @@ export default function App() {
 
             <div
               style={{
-                background: '#EFDFE4',
-                borderRadius: 16,
-                padding: '12px 16px',
-                display: 'flex',
-                gap: 12,
-                alignItems: 'flex-start',
+                borderRadius: 10,
+    background: 'linear-gradient(0deg, #FFF 0%, #FFF 100%), linear-gradient(180deg, #D0A4B1 0%, #A16EB9 100%)',
+    backgroundBlendMode: 'soft-light, normal',
+    padding: '12px 16px',
+    display: 'flex',
+    gap: 12,
+    alignItems: 'flex-start',
               }}
             >
               <Timer
@@ -1582,12 +1652,13 @@ export default function App() {
               <div
                 key={i}
                 style={{
-                  background: '#EFDFE4',
-                  borderRadius: 16,
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column' as const,
-                  gap: 8,
+                  borderRadius: 10,
+background: 'linear-gradient(0deg, #FFF 0%, #FFF 100%), linear-gradient(180deg, #D0A4B1 0%, #A16EB9 100%)',
+backgroundBlendMode: 'soft-light, normal',
+padding: '16px',
+display: 'flex',
+flexDirection: 'column' as const,
+gap: 8,
                 }}
               >
                 <div
@@ -1798,12 +1869,12 @@ export default function App() {
           <div
             style={{
               background: '#A16EB9',
-              borderRadius: 50,
-              display: 'flex',
-              justifyContent: 'space-around',
-              alignItems: 'center',
-              padding: '12px 0',
-              width: '100%',
+    borderRadius: 50,
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    width: 368,
+    height: 69,
             }}
           >
             {[
