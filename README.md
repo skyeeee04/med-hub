@@ -8,7 +8,7 @@
 
 Your intelligent medical referral assistant.
 
-A primary care provider submits a referral → the AI checks what is missing → missing info gets identified → a structured task list is generated → the referral becomes ready → next-step scheduling and preparation are provided.
+A patient enters their referral details → the AI analyzes urgency and detects the specialty → an appointment is scheduled → a personalized task list is generated to prepare → on appointment day the patient checks in and tracks wait time → after the visit, doctor's notes are simplified and translated into the patient's language.
 
 ---
 
