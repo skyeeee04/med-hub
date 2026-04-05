@@ -45,10 +45,6 @@ agent = Agent(
 
 protocol = Protocol(spec=chat_protocol_spec)
 
-# =========================================================
-# Models
-# =========================================================
-
 SUPPORTED_LANGUAGES = {"en", "vi", "es"}
 
 SPECIALTY_MAP = {
@@ -156,9 +152,26 @@ class HealthResponse(Model):
     agent_name: str
 
 
-# =========================================================
-# Helpers
-# =========================================================
+class MedicationItem(Model):
+    name: str
+    explanation: str
+    dosage: Optional[str] = ""
+    frequency: Optional[str] = ""
+    duration: Optional[str] = ""
+    reminder: Optional[str] = ""
+
+
+class AppointmentSummaryRequest(Model):
+    patient_name: str
+    age: Optional[int] = None
+    language_preference: str = "en"
+    notes: List[str]
+
+
+class AppointmentSummaryResponse(Model):
+    translated_summary: str
+    medications: List[MedicationItem]
+
 
 def normalize_language(language: Optional[str]) -> str:
     if not language:
@@ -302,6 +315,58 @@ Patient name: {patient_name}
 Language preference: {language}
 Summary text:
 {summary_text}
+""".strip()
+
+
+def build_appointment_summary_prompt(
+    patient_name: str,
+    notes: List[str],
+    language: str,
+) -> str:
+    notes_text = "\n".join(f"- {note.strip()}" for note in notes if note.strip())
+
+    return f"""
+You are a healthcare appointment summary assistant.
+
+Return ONLY valid JSON.
+
+Required JSON schema:
+{{
+  "translated_summary": "string",
+  "medications": [
+    {{
+      "name": "string",
+      "explanation": "string",
+      "dosage": "string",
+      "frequency": "string",
+      "duration": "string",
+      "reminder": "string"
+    }}
+  ]
+}}
+
+Rules:
+- Convert doctor notes into a simple patient-friendly summary.
+- The summary MUST be in the patient's language:
+  - en -> English
+  - vi -> Vietnamese
+  - es -> Spanish
+- Extract only medications explicitly mentioned in the notes.
+- For each medication, extract:
+  - dosage (example: 500 mg)
+  - frequency (example: twice daily)
+  - duration (example: 7 days)
+- Create a simple explanation for each medication.
+- Create a short reminder sentence for each medication.
+- Keep everything concise and clear.
+- Do not include markdown or extra text.
+- Return only JSON.
+
+Patient name: {patient_name}
+Language preference: {language}
+
+Doctor notes:
+{notes_text}
 """.strip()
 
 
@@ -472,9 +537,29 @@ def sanitize_result(result: Dict[str, Any], data: ReferralRequest) -> Dict[str, 
     return result
 
 
-# =========================================================
-# Core business logic
-# =========================================================
+def sanitize_medications(raw_medications: Any) -> List[MedicationItem]:
+    medications: List[MedicationItem] = []
+
+    if not isinstance(raw_medications, list):
+        return medications
+
+    for item in raw_medications:
+        if not isinstance(item, dict):
+            continue
+
+        medications.append(
+            MedicationItem(
+                name=str(item.get("name", "")).strip(),
+                explanation=str(item.get("explanation", "")).strip(),
+                dosage=str(item.get("dosage", "")).strip(),
+                frequency=str(item.get("frequency", "")).strip(),
+                duration=str(item.get("duration", "")).strip(),
+                reminder=str(item.get("reminder", "")).strip(),
+            )
+        )
+
+    return medications
+
 
 async def analyze_referral_logic(ctx: Context, data: ReferralRequest) -> ReferralAnalysisResponse:
     language = normalize_language(data.language_preference)
@@ -537,9 +622,39 @@ async def explain_patient_logic(
     )
 
 
-# =========================================================
-# REST endpoints
-# =========================================================
+async def summarize_appointment_logic(
+    ctx: Context,
+    patient_name: str,
+    notes: List[str],
+    language_preference: str,
+) -> AppointmentSummaryResponse:
+    language = normalize_language(language_preference)
+
+    try:
+        raw_result = call_asi_json(
+            build_appointment_summary_prompt(
+                patient_name=patient_name,
+                notes=notes,
+                language=language,
+            )
+        )
+
+        translated_summary = str(raw_result.get("translated_summary", "")).strip()
+        if not translated_summary:
+            translated_summary = "Your doctor has provided instructions for your care."
+
+        medications = sanitize_medications(raw_result.get("medications", []))
+
+    except Exception as e:
+        ctx.logger.error(f"Appointment summary failed: {e}")
+        translated_summary = "Your doctor has provided instructions for your care."
+        medications = []
+
+    return AppointmentSummaryResponse(
+        translated_summary=translated_summary,
+        medications=medications,
+    )
+
 
 @agent.on_rest_get("/health", HealthResponse)
 async def health(ctx: Context) -> HealthResponse:
@@ -619,9 +734,22 @@ async def generate_tasks(ctx: Context, req: TaskRequest) -> TaskResponse:
     )
 
 
-# =========================================================
-# Chat protocol support
-# =========================================================
+@agent.on_rest_post(
+    "/appointments/summarize",
+    AppointmentSummaryRequest,
+    AppointmentSummaryResponse,
+)
+async def summarize_appointment(
+    ctx: Context,
+    req: AppointmentSummaryRequest,
+) -> AppointmentSummaryResponse:
+    return await summarize_appointment_logic(
+        ctx=ctx,
+        patient_name=req.patient_name,
+        notes=req.notes,
+        language_preference=req.language_preference,
+    )
+
 
 @protocol.on_message(ChatMessage)
 async def handle_chat(ctx: Context, sender: str, msg: ChatMessage):
