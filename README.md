@@ -6,39 +6,134 @@
 
 # 🏥 VitaSync
 
-Your intelligent medical referral assistant. A primary care provider submits a referral → the AI checks what is missing → missing info gets collected → the referral becomes ready → next-step scheduling and prep is shown.
+Your intelligent medical referral assistant.
+
+A primary care provider submits a referral → the AI checks what is missing → missing info gets identified → a structured task list is generated → the referral becomes ready → next-step scheduling and preparation are provided.
+
+---
 
 ## 🚀 Deliverables
 
-- 💬 **ASI:One Chat Session**: [Try VitaSync on ASI:One](https://asi1.ai/shared-chat/ed3c4af6-62ff-4df0-aaaa-5b9b3bf8105f)
-- 🌐 **Agentverse Profile**: [View Agent on Agentverse](https://agentverse.ai/agents/details/agent1qd7qdmnlslnr0dzk53pshcvcttqmxacul34ett45pg4n0yd9whsxjl8zv9j/profile)
+- 💬 **ASI:One Chat Session**: https://asi1.ai/shared-chat/ed3c4af6-62ff-4df0-aaaa-5b9b3bf8105f
+- 🌐 **Agentverse Profile**: https://agentverse.ai/agents/details/agent1qd7qdmnlslnr0dzk53pshcvcttqmxacul34ett45pg4n0yd9whsxjl8zv9j/profile
+
+---
+
+## 🧠 System Architecture
+
+VitaSync is powered by a **single multi-capability AI agent** built using the Fetch.ai uAgents framework.
+
+### 🔧 Core Components
+
+- **Frontend / Input Layer**
+  - Form-based referral input
+  - Appointment notes input (bullet points)
+
+- **Backend API (FastAPI)**
+  - Handles structured requests
+  - Routes to agent endpoints
+  - Normalizes inputs and outputs
+
+- **AI Agent (Fetch.ai uAgents)**
+  - Central intelligence layer
+  - Handles:
+    - Referral analysis
+    - Task generation
+    - Patient explanation
+    - Appointment summarization
+
+- **AI Model (ASI-1)**
+  - Used for:
+    - Natural language understanding
+    - Medical reasoning
+    - Translation
+    - Structured JSON outputs
+
+---
+
+### 🔄 End-to-End Flow
+User Input (Referral / Appointment Notes)
+↓
+FastAPI Backend
+↓
+Fetch.ai Agent (uAgents)
+↓
+ASI-1 Model
+↓
+Structured JSON Output
+↓
+Frontend / Agentverse Chat
 
 
-## How It Works
+---
 
-\```
-Doctor fills form → AI analyzes → Task list generated → Patient notified → Specialist matched → Appointment scheduled
-\```
+## ⚙️ Tech Stack
 
-## What I Can Do
+- **Backend:** FastAPI (Python)
+- **Agent Framework:** Fetch.ai uAgents
+- **AI Model:** ASI-1 (via API)
+- **Protocols:** AgentChatProtocol
+- **Networking:** ngrok (public agent endpoint)
+- **Communication:** REST + Agent messaging
 
-🧠 **AI Referral Analysis**: Paste or type referral info and instantly get a cleaned summary, detected specialty, urgency rating, and list of missing documents.
+---
 
-📋 **Smart Task List**: Every referral generates a task list with columns for task, responsible party (PCP or patient), and status.
+## 🧩 Key Features
 
-🌍 **Multilingual Patient Explanations**: Medical jargon translated into plain language in English, Spanish, or Vietnamese.
+### 🧠 AI Referral Analysis
+- Cleans and summarizes referral text
+- Detects specialty
+- Assigns urgency level
+- Identifies missing documents and next steps
 
-📍 **Specialist Finder**: Suggests the closest in-network specialists filtered by insurance.
+### 📋 Smart Task List
+- Generates structured tasks
+- Assigns responsibility to PCP, patient, or specialist
+- Tracks referral progress
 
-🔄 **Real-Time Status Tracker**: `[Submitted] → [Reviewing] → [Waiting Info] → [Ready] → [Scheduled]`
+### 🌍 Multilingual Patient Explanation
+- Converts medical jargon into plain language
+- Supports English, Spanish, and Vietnamese
 
-🗒️ **Appointment Notes**: Doctors enter bullet points, AI expands them into a patient-friendly summary, and translates into the patient's language.
+### 🔄 Real-Time Status Tracker
 
+`[Submitted] → [Reviewing] → [Waiting Info] → [Ready] → [Scheduled]`
 
-## Input Fields
+### 🗒️ Appointment Notes → AI Summary
+- Doctors enter bullet-point notes
+- AI generates a translated patient-facing summary
+- AI extracts medication details
 
-| Field | Description |
-|---|---|
-| Patient name | Full name of the patient |
-| Referred specialty | e.g. Cardiology, Neurology |
-| Reason for referral | Symptom
+### 💊 Medication Intelligence
+- Extracts medication name
+- Explains what the medication is for
+- Extracts dosage, frequency, and duration
+- Generates a reminder patients can follow
+
+---
+
+## 🤖 Agent Design
+
+### Single-Agent, Multi-Responsibility System
+
+Instead of multiple agents, VitaSync uses **one unified agent** that handles:
+
+- Referral understanding  
+- Missing information detection  
+- Task orchestration  
+- Patient communication  
+- Appointment summarization  
+
+This simplifies coordination while still leveraging agent-based architecture.
+
+---
+
+## 💬 Chat Protocol (Fetch.ai Integration)
+
+We implemented the **AgentChatProtocol** using:
+
+```python
+protocol = Protocol(spec=chat_protocol_spec)
+
+@protocol.on_message(ChatMessage)
+async def handle_chat(...)
