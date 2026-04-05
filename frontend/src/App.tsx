@@ -98,6 +98,8 @@ const [selectedDate, setSelectedDate] = useState('');
       });
       const data = await res.json();
       setGeneratedSummary(data.translated_summary);
+      setMedications(data.medications || []);
+      setScreen('notes2');
     } catch (error) {
       console.error('API failed, using mock:', error);
       const summaries: any = {
