@@ -81,35 +81,38 @@ Frontend / Agentverse Chat
 ## 🧩 Key Features
 
 ### 🧠 AI Referral Analysis
-- Cleans and summarizes referral text
-- Detects specialty
-- Assigns urgency level
-- Identifies missing documents and next steps
+- Analyzes patient referral text  
+- Detects medical specialty automatically  
+- Assigns urgency level (low / medium / high)  
+- Identifies missing documents and next steps  
 
-### 📋 Smart Task List
-- Generates structured tasks
-- Assigns responsibility to PCP, patient, or specialist
-- Tracks referral progress
+### 📅 Smart Appointment Scheduling
+- Patient selects location, date and time slot  
+- Appointment confirmation with full details shown on task list screen  
 
-### 🌍 Multilingual Patient Explanation
-- Converts medical jargon into plain language
-- Supports English, Spanish, and Vietnamese
+### 📋 Personalized Task List
+- Generates structured preparation tasks  
+- Color-coded status: Missing (dark blue) / Pending (purple) / Complete (purple)  
+- Patient notes section for new symptoms or questions  
 
-### 🔄 Real-Time Status Tracker
+### 🌍 Multilingual Support
+- Converts medical jargon into plain language  
+- Supports English, Spanish, and Vietnamese  
+- Translations powered by ASI-1  
 
-`[Submitted] → [Reviewing] → [Waiting Info] → [Ready] → [Scheduled]`
+### ⏱️ Appointment Day Check-in
+- Real-time wait time progress bar  
+- Patient can update notes before seeing the doctor  
 
-### 🗒️ Appointment Notes → AI Summary
-- Doctors enter bullet-point notes
-- AI generates a translated patient-facing summary
-- AI extracts medication details
+### 🗒️ Doctor Notes → AI Summary
+- Doctor's clinical notes displayed as-is  
+- AI generates patient-friendly translated summary  
+- Medication details extracted and displayed clearly  
 
 ### 💊 Medication Intelligence
-- Extracts medication name
-- Explains what the medication is for
-- Extracts dosage, frequency, and duration
-- Generates a reminder patients can follow
-
+- Medication name and explanation  
+- Dosage, frequency, and duration  
+- Simple patient reminders  
 ---
 
 ## 🤖 Agent Design
