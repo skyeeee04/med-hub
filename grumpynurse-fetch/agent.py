@@ -66,7 +66,6 @@ SPECIALTY_MAP = {
 
 
 class ReferralRequest(Model):
-    
     patient_name: str
     age: Optional[int] = None
     language_preference: str = "en"
@@ -76,7 +75,6 @@ class ReferralRequest(Model):
 
 
 class TeamReferralRequest(Model):
-    
     patient_name: str
     referred_specialty: str
     reason_for_referral: str
@@ -107,7 +105,6 @@ class ReferralAnalysisResponse(Model):
 
 
 class TeamReferralResponse(Model):
-    
     patient_name: str
     referred_specialty: str
     reason_for_referral: str
@@ -151,6 +148,7 @@ class TaskResponse(Model):
     tasks: List[TaskItem]
     missing_info: List[str]
     status: str
+    progress_percent: int
 
 
 class HealthResponse(Model):
@@ -187,6 +185,17 @@ def normalize_language(language: Optional[str]) -> str:
 def normalize_specialty_simple_name(specialty: str) -> str:
     specialty_lower = (specialty or "").strip().lower()
     return SPECIALTY_MAP.get(specialty_lower, "Specialist Doctor")
+
+
+def compute_status_progress(status: str) -> int:
+    mapping = {
+        "Submitted": 20,
+        "Reviewing": 40,
+        "Waiting Info": 60,
+        "Ready": 80,
+        "Scheduled": 100,
+    }
+    return mapping.get(status, 0)
 
 
 def team_request_to_referral_request(data: TeamReferralRequest) -> ReferralRequest:
@@ -537,11 +546,9 @@ async def health(ctx: Context) -> HealthResponse:
     return HealthResponse(status="ok", agent_name=AGENT_NAME)
 
 
-
 @agent.on_rest_post("/analyze_referral", ReferralRequest, ReferralAnalysisResponse)
 async def analyze_referral(ctx: Context, req: ReferralRequest) -> ReferralAnalysisResponse:
     return await analyze_referral_logic(ctx, req)
-
 
 
 @agent.on_rest_post("/referral", TeamReferralRequest, TeamReferralResponse)
@@ -567,10 +574,8 @@ async def analyze_referral_team_route(ctx: Context, req: TeamReferralRequest) ->
     )
 
 
-
 @agent.on_rest_get("/patients", PatientExplanationResponse)
 async def get_patients(ctx: Context) -> PatientExplanationResponse:
-    
     return await explain_patient_logic(
         ctx=ctx,
         patient_name="Patient",
@@ -589,7 +594,6 @@ async def explain_patient(ctx: Context, req: PatientExplanationRequest) -> Patie
     )
 
 
-# Teammate-compatible task route
 @agent.on_rest_post("/tasks", TaskRequest, TaskResponse)
 async def generate_tasks(ctx: Context, req: TaskRequest) -> TaskResponse:
     internal_req = team_request_to_referral_request(
@@ -604,12 +608,14 @@ async def generate_tasks(ctx: Context, req: TaskRequest) -> TaskResponse:
     )
 
     result = await analyze_referral_logic(ctx, internal_req)
+    progress_percent = compute_status_progress(result.status)
 
     return TaskResponse(
         patient_name=req.patient_name,
         tasks=result.tasks,
         missing_info=result.missing_info,
         status=result.status,
+        progress_percent=progress_percent,
     )
 
 
