@@ -8,6 +8,12 @@
 
 Your intelligent medical referral assistant. A primary care provider submits a referral → the AI checks what is missing → missing info gets collected → the referral becomes ready → next-step scheduling and prep is shown.
 
+## 🚀 Deliverables
+
+- 💬 **ASI:One Chat Session**: [Try VitaSync on ASI:One](https://asi1.ai/shared-chat/ed3c4af6-62ff-4df0-aaaa-5b9b3bf8105f)
+- 🌐 **Agentverse Profile**: [View Agent on Agentverse](https://agentverse.ai/agents/details/agent1qd7qdmnlslnr0dzk53pshcvcttqmxacul34ett45pg4n0yd9whsxjl8zv9j/profile)
+
+
 ## How It Works
 
 \```
