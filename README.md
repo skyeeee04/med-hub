@@ -26,9 +26,8 @@ Doctor fills form → AI analyzes → Task list generated → Patient notified �
 
 🔄 **Real-Time Status Tracker**: `[Submitted] → [Reviewing] → [Waiting Info] → [Ready] → [Scheduled]`
 
-🗒️ **Appointment Notes**: Doctors enter bullet points, AI expands and voices them in the patient's language.
+🗒️ **Appointment Notes**: Doctors enter bullet points, AI expands them into a patient-friendly summary, and translates into the patient's language.
 
-💰 **Estimated Cost**: Out-of-pocket estimate based on specialty and insurance.
 
 ## Input Fields
 
